@@ -1,0 +1,48 @@
+version: '3'
+services:
+  mysql_maestro1:
+    image: mysql:5.7
+    container_name: maestro1
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: replication
+      MYSQL_LOG_CONSOLE: "true"
+    ports:
+      - "3306:3306"
+    networks:
+      - mysql_network
+    command: --server-id=1 --log-bin=mysql-bin --binlog-format=ROW --enforce-gtid-consistency=ON --log-slave-updates=ON
+
+  mysql_maestro2:
+    image: mysql:5.7
+    container_name: maestro2
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: replication
+      MYSQL_LOG_CONSOLE: "true"
+    ports:
+      - "3307:3306"
+    networks:
+      - mysql_network
+    command: --server-id=2 --log-bin=mysql-bin --binlog-format=ROW --enforce-gtid-consistency=ON --log-slave-updates=ON
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: php_myadmin
+    restart: always
+    ports:
+      - "8585:80"
+    environment:
+      PMA_HOSTS: "mysql_maestro1,mysql_maestro2"
+      PMA_ARBITRARY: 1
+    networks:
+      - mysql_network
+    depends_on:
+      - mysql_maestro1
+      - mysql_maestro2
+
+networks:
+  mysql_network:
+    driver: bridge
